@@ -1,7 +1,7 @@
 SPI DISPLAY PINS
 
-디스플레이 - 보드
-SCK - GP10( SCK)
+디스플레이 - 보드\n
+SCK - GP10( SCK)\n
 MOSI(DIN) - GP11(TX)
 CS - GP13 (CSn)
 DC - GP12(RX)
