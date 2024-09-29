@@ -1,24 +1,25 @@
-SPI DISPLAY PINS
+## SPI DISPLAY PINS
 
-디스플레이 - 보드\n
-SCK - GP10( SCK)\n
-MOSI(DIN) - GP11(TX)
-CS - GP13 (CSn)
-DC - GP12(RX)
-RST - GP14
+### 디스플레이 - 보드 <br />
+SCK - GP10( SCK) <br />
+MOSI(DIN) - GP11(TX) <br />
+CS - GP13 (CSn) <br />
+DC - GP12(RX) <br />
+RST - GP14 <br />
+ <br />
 
+### I2C SENSOR PIN <br />
 
-I2C SENSOR PIN
-
-센서 - 보드
-SCL - GP1 (SCL)
-SDA - GP0 (SDA)
-
-MODE SWITCH
-GP15
-
-CONTROL SWITCH
-ISO UP - GP16
-ISO DOWN - GP17
-F/SS UP - GP18
-F/SS DOWN - GP19
+센서 - 보드 <br />
+SCL - GP1 (SCL) <br />
+SDA - GP0 (SDA) <br />
+ <br />
+### MODE SWITCH <br />
+GP15 <br />
+ <br />
+ 
+### CONTROL SWITCH <br />
+ISO UP - GP16  <br />
+ISO DOWN - GP17  <br />
+F/SS UP - GP18 <br />
+F/SS DOWN - GP19 <br />
