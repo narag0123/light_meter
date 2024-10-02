@@ -1,7 +1,8 @@
 from time import sleep, ticks_ms, ticks_diff
-from machine import Pin, SPI, I2C
+from machine import Pin, SPI, I2C, ADC
 from lib.ssd1351 import SSD1351
 
+# from lib.bh1750 import BH1750
 from lib.bh1750 import BH1750
 from ev_calc import ExposureCalculator
 from lib.fraction import Fraction
@@ -23,6 +24,7 @@ RED = 0x00FF00
 BLUE = 0xFF0000
 GREEN = 0x0000FF
 
+# sleep(2)
 
 # SPI DISPLAY SETTING
 sck = Pin(10)
@@ -37,12 +39,16 @@ oled.init_display()
 oled.fill(0x000)
 
 # I2C0 LIGHTMETER SETTING
-scl = Pin(1)
-sda = Pin(0)
-i2c0 = I2C(0, scl=scl, sda=sda, freq=100000)
-# LIGHTMETER INIT 
-bh1750 = BH1750(0x23, i2c0)
+sda = Pin(18) # 노랑 
+scl = Pin(19) # 주황 
 
+i2c0 = I2C(1, scl=scl, sda=sda, freq=100000)
+print(i2c0)
+print(i2c0.scan())
+# LIGHTMETER INIT
+
+bh1750 = BH1750(0x23, i2c0)
+bh1750.power_on()  # 센서 전원 켜기
 
     
 # SWITCH MODE SETTING
@@ -87,11 +93,12 @@ else:
 
 
 
-# 버튼으로 f,ss, iso 제
-btn_iso_up = Pin(16, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
-btn_iso_down = Pin(17, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
-btn_f_ss_down = Pin(18, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
-btn_f_ss_up = Pin(19, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
+# 버튼으로 f,ss, iso 제어 
+btn_f_ss_down = Pin(16, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
+btn_f_ss_up = Pin(17, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
+btn_iso_up = Pin(20, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
+btn_iso_down = Pin(21, Pin.IN, Pin.PULL_UP)  # 스위치 핀 설정
+
 
 # 디바운스 시간 (밀리초 단위)
 DEBOUNCE_TIME = 200
@@ -167,15 +174,61 @@ btn_f_ss_down.irq(trigger=Pin.IRQ_FALLING, handler=f_ss_button_down_callback)
 btn_f_ss_up.irq(trigger=Pin.IRQ_FALLING, handler=f_ss_button_up_callback)
 
 
+vsys = ADC(29)                      # reads the system input voltage
+charging = Pin(24, Pin.IN)          # reading GP24 tells us whether or not USB power is connected
+conversion_factor = 3 * 3.3 / 65535
+
+full_battery = 4.2                  # these are our reference voltages for a full/empty battery, in volts
+empty_battery = 2.8                 # the values could vary by battery size/manufacturer so you might need to adjust them
+
 while 1:
     lux = bh1750.measurement
     if lux > 0:
         str_lux = str(round(lux))
     else:
         str_lux = 0
-
-
+        
     oled.fill(0)
+        
+    voltage = vsys.read_u16() * conversion_factor
+
+    
+    percentage = 100 * ((voltage - empty_battery) / (full_battery - empty_battery))
+    
+    
+    if percentage > 100:
+        percentage = 100.00
+        oled.draw_rect(105, 100, 25, 12, GREEN, 0x0000FF, radius=0, border_thickness=0)
+        font_display_roboto_normal_10(oled, 107, 102, f"{{:.0f}%'.format(percentage)}", WHITE)
+    elif percentage < 0:
+        percentage = 0
+        oled.draw_rect(105, 100, 25, 12, RED, 0x0000FF, radius=0, border_thickness=0)
+        font_display_roboto_normal_10(oled, 113, 102, "0", WHITE)
+    elif percentage < 20:
+        oled.draw_rect(105, 100, 25, 12, YELLOW, 0x0000FF, radius=0, border_thickness=0)
+        font_display_roboto_normal_10(oled, 105, 102, f"{{:.0f}%'.format(percentage)}", WHITE)        
+    else:
+        oled.draw_rect(105, 100, 25, 12, GREEN, 0x0000FF, radius=0, border_thickness=0)
+        font_display_roboto_normal_10(oled, 105, 102, f"{{:.0f}%'.format(percentage)}", WHITE)
+        
+
+
+
+
+    
+    if charging.value() == 1:         # if it's plugged into USB power...
+        print("it's plugged into USB power")
+    else:                             # if not, display the battery stats
+        print("display the battery stats")
+        print('{:.2f}'.format(voltage) + "v")
+        print('{:.0f}%'.format(percentage))
+
+
+
+    
+
+
+
 
     calculator = ExposureCalculator(lux)
     # 버튼이 눌릴 때 호출되는 인터럽트 설정
